@@ -13,5 +13,5 @@ WPF 기반 2D 이미지 뷰어
 - 확대 및 축소
 - 확대 후 이미지 이동
 
-## License
+## 🔒 License
 UF-ImageViewer is licensed under the [MIT license](LICENSE.TXT).

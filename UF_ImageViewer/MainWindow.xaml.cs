@@ -18,8 +18,14 @@ public partial class MainWindow : Window
     private void Button_Click(object sender, RoutedEventArgs e)
     {
         OpenFileDialog openFileDialog = new OpenFileDialog();
-        openFileDialog.Filter = "Image files|*.png;*.jpg;*.bmp|All files (*.*)|*.*";
+        openFileDialog.Filter = "Image files (*.png;*.jpeg;*.jpg;*.bmp)|*.png;*.jpeg;*.jpg;*.bmp|All files (*.*)|*.*";
+
         if (openFileDialog.ShowDialog() == true)
-            myViewer.ImagePath = openFileDialog.FileName;
+        {
+            string filePath = openFileDialog.FileName;
+            string extension = System.IO.Path.GetExtension(filePath);
+            if (extension == ".png" || extension == ".jpeg" || extension == ".jpg" || extension == ".bmp")
+                myViewer.ImagePath = filePath;
+        }
     }
 }

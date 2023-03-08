@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace UF_ImageViewer;
+namespace UF.ImageViewer;
 
 public partial class UF_ImageViewer : UserControl
 {

@@ -7,10 +7,16 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Point = System.Windows.Point;
 
-namespace UF_ImageViewer;
+namespace UF.ImageViewer;
 
 public partial class UF_ImageViewer : UserControl
 {
+    /// <summary>
+    /// 이미지를 이동 시킵니다.
+    /// </summary>
+    /// <param name="panXY"> 이전 출력 위치 </param>
+    /// <param name="clickStart"> 시작 클릭 위치 </param>
+    /// <param name="clickCurrent"> 현재 클릭 위치 </param>
     void Pan(Point panXY, Point clickStart, Point clickCurrent)
     {
         ScaleTransform st = _scaleTransform;
@@ -103,6 +109,12 @@ public partial class UF_ImageViewer : UserControl
         st.ScaleY = scaleY;
         tt.X = panX;
         tt.Y = panY;
+    }
+
+    static bool IsImageFile(string filePath)
+    {
+        string extension = Path.GetExtension(filePath).ToLower();
+        return extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".bmp" || extension == ".gif";
     }
 
     static Bitmap BitmapImage2Bitmap(BitmapImage bitmapImage)

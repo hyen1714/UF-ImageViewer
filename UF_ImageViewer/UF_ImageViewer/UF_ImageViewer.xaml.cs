@@ -1,10 +1,7 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
-namespace UF_ImageViewer;
+namespace UF.ImageViewer;
 
 public partial class UF_ImageViewer : UserControl
 {
@@ -12,9 +9,6 @@ public partial class UF_ImageViewer : UserControl
     {
         InitializeComponent();
     }
-
-
-
 
 
 }
