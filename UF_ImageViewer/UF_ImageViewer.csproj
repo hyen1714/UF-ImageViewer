@@ -11,4 +11,16 @@
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="UF_ImageViewer\UF_ImageViewer_DP.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="UF_ImageViewer\UF_ImageViewer_Func.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="UF_ImageViewer\UF_ImageViewer_Event.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
 </Project>

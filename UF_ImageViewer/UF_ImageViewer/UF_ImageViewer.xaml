@@ -6,10 +6,11 @@
              xmlns:local="clr-namespace:UF_ImageViewer"
              mc:Ignorable="d" 
              d:DesignHeight="400" d:DesignWidth="400"
-             ClipToBounds="True" Background="Black">
+             ClipToBounds="True" Background="Black" Cursor="Cross">
     <Image x:Name="_imageViewer" 
                MouseWheel="ImageViewer_MouseWheel" 
                MouseLeftButtonDown="ImageViewer_MouseLeftButtonDown" 
+               MouseLeftButtonUp="ImageViewer_MouseLeftButtonUp"
                MouseMove="ImageViewer_MouseMove">
         <Image.RenderTransform>
             <TransformGroup>
