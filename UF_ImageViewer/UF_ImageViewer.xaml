@@ -5,17 +5,17 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:UF_ImageViewer"
              mc:Ignorable="d" 
-             d:DesignHeight="400" d:DesignWidth="400">
-    <Grid Background="Black">
-        <Image x:Name="_imageViewer" 
+             d:DesignHeight="400" d:DesignWidth="400"
+             ClipToBounds="True" Background="Black">
+    <Image x:Name="_imageViewer" 
                MouseWheel="ImageViewer_MouseWheel" 
                MouseLeftButtonDown="ImageViewer_MouseLeftButtonDown" 
                MouseMove="ImageViewer_MouseMove">
-            <Image.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform x:Name="_scaleTransform"/>
-                </TransformGroup>
-            </Image.RenderTransform>
-        </Image>
-    </Grid>
+        <Image.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform x:Name="_scaleTransform"/>
+                <TranslateTransform x:Name="_translateTransform"/>
+            </TransformGroup>
+        </Image.RenderTransform>
+    </Image>
 </UserControl>

@@ -3,6 +3,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace UF_ImageViewer;
@@ -45,12 +46,42 @@ public partial class UF_ImageViewer : UserControl
 
     void ImageViewer_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
     {
+        ScaleTransform st = _scaleTransform;
+        TranslateTransform tt = _translateTransform;
+
+        double scaleX = st.ScaleX;
+        double scaleY = st.ScaleY;
+        if (e.Delta < 0)
+        {
+            scaleX *= 0.7;
+            scaleY *= 0.7;
+        }
+        else
+        {
+            scaleX *= 1.6;
+            scaleY *= 1.6;
+        }
+        if (scaleX < 1.0)
+            scaleX = 1.0;
+        if (scaleY < 1.0)
+            scaleY = 1.0;
+
         System.Windows.Point mousePos = e.GetPosition(_imageViewer);
-        
-        double scale = e.Delta > 0 ? 1.1 : 0.9;
-        _scaleTransform.ScaleX *= scale;
-        _scaleTransform.ScaleY *= scale;
+        double absoluteX = (mousePos.X * st.ScaleX) + tt.X;
+        double absoluteY = (mousePos.Y * st.ScaleY) + tt.Y;
+        double panX = absoluteX - (mousePos.X * scaleX);
+        double panY = absoluteY - (mousePos.Y * scaleY);
+        if (panX > 0.0 || scaleX == 1.0)
+            panX = 0.0;
+        if (panY > 0.0 || scaleY == 1.0)
+            panY = 0.0;
+
+        st.ScaleX = scaleX;
+        st.ScaleY = scaleY;
+        tt.X = panX;
+        tt.Y = panY;
     }
+
 
     static Bitmap BitmapImage2Bitmap(BitmapImage bitmapImage)
     {
