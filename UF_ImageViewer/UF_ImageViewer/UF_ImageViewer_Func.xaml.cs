@@ -69,7 +69,7 @@ public partial class UF_ImageViewer : UserControl
 
         double scaleX = st.ScaleX;
         double scaleY = st.ScaleY;
-        if (zoomIn == true)
+        if (zoomIn == false)
         {
             scaleX *= 0.7;
             scaleY *= 0.7;

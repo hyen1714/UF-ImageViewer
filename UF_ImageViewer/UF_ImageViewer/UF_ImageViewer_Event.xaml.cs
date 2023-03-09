@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System;
+using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -23,12 +25,19 @@ public partial class UF_ImageViewer : UserControl
         }
     }
 
+
     void ImageViewer_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if(_imageViewer.IsFocused == false)
+            _imageViewer.Focus();
+
+        ScaleTransform st = _scaleTransform;
+        if (st.ScaleX == 1.0 && st.ScaleY == 1.0)
+            return;
+
         TranslateTransform tt = _translateTransform;
         panXY = new Point(tt.X, tt.Y);
         clickStart = e.GetPosition(this);
-
         _imageViewer.CaptureMouse();
     }
 
@@ -45,7 +54,23 @@ public partial class UF_ImageViewer : UserControl
 
     void ImageViewer_MouseWheel(object sender, MouseWheelEventArgs e)
     {
-        Zoom(e.Delta < 0, e.GetPosition(_imageViewer));
+        Zoom(e.Delta > 0, e.GetPosition(_imageViewer));
     }
 
+    void ImageViewer_KeyDown(object sender, KeyEventArgs e)
+    {
+        bool zoom = true;
+        switch(e.Key)
+        {
+            case Key.Add:
+                break;
+            case Key.Subtract:
+                zoom = false;
+                break;
+            default:
+                return;
+        }
+        if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            Zoom(zoom, Mouse.GetPosition(_imageViewer));
+    }
 }

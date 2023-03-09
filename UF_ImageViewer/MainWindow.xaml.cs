@@ -23,7 +23,7 @@ public partial class MainWindow : Window
         if (openFileDialog.ShowDialog() == true)
         {
             string filePath = openFileDialog.FileName;
-            string extension = System.IO.Path.GetExtension(filePath);
+            string extension = System.IO.Path.GetExtension(filePath).ToLower();
             if (extension == ".png" || extension == ".jpeg" || extension == ".jpg" || extension == ".bmp")
                 myViewer.ImagePath = filePath;
         }
