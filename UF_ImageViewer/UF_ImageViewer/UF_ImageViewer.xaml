@@ -6,20 +6,27 @@
              xmlns:local="clr-namespace:UF.ImageViewer"
              mc:Ignorable="d" 
              d:DesignHeight="400" d:DesignWidth="400"
-             AllowDrop="True" Drop="UserControl_Drop"
-             Background="Black" Cursor="Cross" ClipToBounds="True">
-    <Image x:Name="_imageViewer"
-           Focusable="True"
-           MouseWheel="ImageViewer_MouseWheel" 
-           MouseLeftButtonDown="ImageViewer_MouseLeftButtonDown" 
-           MouseLeftButtonUp="ImageViewer_MouseLeftButtonUp"
-           MouseMove="ImageViewer_MouseMove"
-           KeyDown="ImageViewer_KeyDown">
-        <Image.RenderTransform>
-            <TransformGroup>
-                <ScaleTransform x:Name="_scaleTransform"/>
-                <TranslateTransform x:Name="_translateTransform"/>
-            </TransformGroup>
-        </Image.RenderTransform>
-    </Image>
+             AllowDrop="True" Drop="UserControl_Drop">
+    <Canvas x:Name="_canvas"
+            ClipToBounds="True"
+            Cursor="Cross" Background="Black" 
+            SizeChanged="Canvas_SizeChanged">
+        <Image x:Name="_imageViewer" 
+            SnapsToDevicePixels="True"    
+            RenderOptions.BitmapScalingMode="NearestNeighbor"
+            Focusable="True"
+            MouseWheel="ImageViewer_MouseWheel" 
+            MouseLeftButtonDown="ImageViewer_MouseLeftButtonDown" 
+            MouseLeftButtonUp="ImageViewer_MouseLeftButtonUp"
+            MouseRightButtonDown="ImageViewer_MouseRightButtonDown"
+            MouseMove="ImageViewer_MouseMove"
+            KeyDown="ImageViewer_KeyDown">
+            <Image.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="_scaleTransform"/>
+                    <TranslateTransform x:Name="_translateTransform"/>
+                </TransformGroup>
+            </Image.RenderTransform>
+        </Image>
+    </Canvas>
 </UserControl>

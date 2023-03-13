@@ -1,10 +1,13 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using Point = System.Windows.Point;
 
 namespace UF.ImageViewer;
@@ -20,35 +23,33 @@ public partial class UF_ImageViewer : UserControl
     void Pan(Point panXY, Point clickStart, Point clickCurrent)
     {
         ScaleTransform st = _scaleTransform;
-        TranslateTransform tt = _translateTransform;
-        double width = _imageViewer.ActualWidth;
-        double height = _imageViewer.ActualHeight;
-
-        double scaleX = st.ScaleX;
-        double scaleY = st.ScaleY;
-        if (scaleX == 1.0 && scaleY == 1.0)
+        double scaleW = st.ScaleX;
+        double scaleH = st.ScaleY;
+        if (scaleW == 1.0 && scaleH == 1.0)
             return;
 
-        Vector v = clickStart - clickCurrent;
-        double panX = panXY.X - v.X;
-        double panY = panXY.Y - v.Y;
-
+        TranslateTransform tt = _translateTransform;
+        Vector vector = clickStart - clickCurrent;
+        double panX = panXY.X - vector.X;
+        double panY = panXY.Y - vector.Y;
+        double imgDipW = _imageViewer.ActualWidth;
+        double imgDipH = _imageViewer.ActualHeight;
         if (panX > 0.0)
             panX = 0.0;
         else
         {
-            double widthScale = width * scaleX;
-            if (panX + widthScale < width)
-                panX = width - widthScale;
+            double scaleDipW = imgDipW * scaleW;
+            if (panX + scaleDipW < imgDipW)
+                panX = imgDipW - scaleDipW;
         }
 
         if (panY > 0.0)
             panY = 0.0;
         else
         {
-            double heightScale = height * scaleY;
-            if (panY + heightScale < height)
-                panY = height - heightScale;
+            double scaleDipH = imgDipH * scaleH;
+            if (panY + scaleDipH < imgDipH)
+                panY = imgDipH - scaleDipH;
         }
 
         tt.X = panX;
@@ -63,57 +64,146 @@ public partial class UF_ImageViewer : UserControl
     void Zoom(bool zoomIn, Point point)
     {
         ScaleTransform st = _scaleTransform;
-        TranslateTransform tt = _translateTransform;
-        double width = _imageViewer.ActualWidth;
-        double height = _imageViewer.ActualHeight;
+        if (zoomIn == true)
+        {
+            double pixelCntX = _bitmapImage.PixelWidth / st.ScaleX;   
+            double pixelCntY = _bitmapImage.PixelHeight / st.ScaleY;
+            double dipPixelW = _imageViewer.ActualWidth / pixelCntX;  
+            double dipPixelH = _imageViewer.ActualHeight / pixelCntY;
+            double canvasPixelCntX = _canvas.ActualWidth / dipPixelW; 
+            double canvasPixelCntY = _canvas.ActualHeight / dipPixelH;
+            if (canvasPixelCntX < 10.0 && canvasPixelCntY < 10.0)
+                return;
+        }
 
-        double scaleX = st.ScaleX;
-        double scaleY = st.ScaleY;
+        double scaleW = st.ScaleX;
+        double scaleH = st.ScaleY;
         if (zoomIn == false)
         {
-            scaleX *= 0.7;
-            scaleY *= 0.7;
+            scaleW *= 0.7;
+            scaleH *= 0.7;
+            if (scaleW < 1.0)
+                scaleW = 1.0;
+            if (scaleH < 1.0)
+                scaleH = 1.0;
         }
         else
         {
-            scaleX *= 1.6;
-            scaleY *= 1.6;
+            scaleW *= 1.6;
+            scaleH *= 1.6;
         }
-        if (scaleX < 1.0)
-            scaleX = 1.0;
-        if (scaleY < 1.0)
-            scaleY = 1.0;
 
+        TranslateTransform tt = _translateTransform;
         double absoluteX = (point.X * st.ScaleX) + tt.X;
         double absoluteY = (point.Y * st.ScaleY) + tt.Y;
-        double panX = absoluteX - (point.X * scaleX);
-        double panY = absoluteY - (point.Y * scaleY);
+        double panX = absoluteX - (point.X * scaleW);
+        double panY = absoluteY - (point.Y * scaleH);
+        double imgDipW = _imageViewer.ActualWidth;
+        double imgDipH = _imageViewer.ActualHeight;
         if (panX > 0.0)
             panX = 0.0;
         else
-        {   
-            double widthScale = width * scaleX;
-            if (panX + widthScale < width)
-                panX = width - widthScale;
+        {
+            double scaleDipW = imgDipW * scaleW;
+            if (panX + scaleDipW < imgDipW)
+                panX = imgDipW - scaleDipW;
         }
         if (panY > 0.0)
             panY = 0.0;
         else
-        {   
-            double heightScale = height * scaleY;
-            if (panY + heightScale < height)
-                panY = height - heightScale;
+        {
+            double scaleDipH = imgDipH * scaleH;
+            if (panY + scaleDipH < imgDipH)
+                panY = imgDipH - scaleDipH;
         }
 
-        st.ScaleX = scaleX;
-        st.ScaleY = scaleY;
+        st.ScaleX = scaleW;
+        st.ScaleY = scaleH;
         tt.X = panX;
         tt.Y = panY;
     }
 
+    void ClearPixelLine()
+    {
+        var linesToRemove = _canvas.Children.OfType<Line>().Where(line => line.Name.StartsWith("PixelLine")).ToList();
+        foreach (var line in linesToRemove)
+            _canvas.Children.Remove(line);
+    }
+
+    void DrawPixelLine()
+    {        
+        ScaleTransform st = _scaleTransform;
+        double pixelCntX = _bitmapImage.PixelWidth / st.ScaleX;   // 확대한 픽셀 개수
+        double pixelCntY = _bitmapImage.PixelHeight / st.ScaleY;
+        double dipPixelW = _imageViewer.ActualWidth / pixelCntX;  // 현재 픽셀 사이즈
+        double dipPixelH = _imageViewer.ActualHeight / pixelCntY;
+        double canvasPixelCntX = _canvas.ActualWidth / dipPixelW; // 화면상 보여지고 픽셀 개수
+        double canvasPixelCntY = _canvas.ActualHeight / dipPixelH;
+
+        if (canvasPixelCntX < 20.0 && canvasPixelCntY < 20.0)
+        {
+            TranslateTransform tt = _translateTransform;
+            double canvasWGap = Math.Round(_canvas.ActualWidth - _imageViewer.ActualWidth, 3) / 2.0;
+            double canvasHGap = Math.Round(_canvas.ActualHeight - _imageViewer.ActualHeight, 3) / 2.0;
+            double calibrationX = canvasWGap / dipPixelW;
+            double calibrationY = canvasHGap / dipPixelH;
+
+            double ratioX = _bitmapImage.PixelWidth / (_imageViewer.ActualWidth * st.ScaleX);
+            double ratioY = _bitmapImage.PixelHeight / (_imageViewer.ActualHeight * st.ScaleY);
+            double pixelL = Math.Abs(tt.X * ratioX) - calibrationX;
+            double pixelT = Math.Abs(tt.Y * ratioY) - calibrationY;
+
+            double gapX = Math.Ceiling(pixelL) - pixelL;
+            double gapY = Math.Ceiling(pixelT) - pixelT;
+            double startX =  dipPixelW * gapX;
+            double startY =  dipPixelH * gapY;
+
+            for (int i = 0; i < canvasPixelCntX; i++)
+            {
+                string keyV = $"PixelLineV{i}";
+                Line? shape = _canvas.Children.OfType<Line>().FirstOrDefault(s => s.Name == keyV);
+                if (shape == null)
+                {
+                    Line line = new()
+                    {
+                        X1 = startX + (dipPixelW * i),
+                        X2 = startX + (dipPixelW * i),
+                        Y2 = _canvas.ActualHeight,
+                        Stroke = new SolidColorBrush(PixelLineColor),
+                        Name = keyV
+                    };
+                    _canvas.Children.Add(line);
+                }
+            }
+            
+            for (int i = 0; i < canvasPixelCntY; i++)
+            {
+                string keyH = $"PixelLineH{i}";
+                Line? shape = _canvas.Children.OfType<Line>().FirstOrDefault(s => s.Name == keyH);
+                if (shape == null)
+                {
+                    Line line = new()
+                    {
+                        X2 = _canvas.ActualWidth,
+                        Y1 = startY + (dipPixelH * i),
+                        Y2 = startY + (dipPixelH * i),
+                        Stroke = new SolidColorBrush(PixelLineColor),
+                        Name = keyH
+                    };
+                    _canvas.Children.Add(line);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 파일의 확장자확인하여 이미지 파일인지 판단.
+    /// </summary>
+    /// <param name="filePath"> 풀경로 </param>
+    /// <returns> 이미지 확장자 인 경우 true </returns>
     static bool IsImageFile(string filePath)
     {
-        string extension = Path.GetExtension(filePath).ToLower();
+        string extension = System.IO.Path.GetExtension(filePath).ToLower();
         return extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".bmp" || extension == ".gif";
     }
 
@@ -145,3 +235,4 @@ public partial class UF_ImageViewer : UserControl
     }
 
 }
+

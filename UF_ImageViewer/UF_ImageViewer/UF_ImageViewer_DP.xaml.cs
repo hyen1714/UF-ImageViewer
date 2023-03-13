@@ -1,13 +1,10 @@
-﻿using System.Drawing;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 
 namespace UF.ImageViewer;
 
 public partial class UF_ImageViewer : UserControl
 {
-    Bitmap? _imgOrg = null, _imgShow = null;
-
     public static readonly DependencyProperty ImagePathProperty = DependencyProperty.Register("ImagePath", typeof(string), typeof(UF_ImageViewer), new PropertyMetadata("", ImagePathPropertyChanged));
     public string ImagePath
     {
@@ -19,11 +16,12 @@ public partial class UF_ImageViewer : UserControl
         if (d is UF_ImageViewer control)
         {
             string path = (string)e.NewValue;
+            if (IsImageFile(path) == false)
+                return;
 
-            using Bitmap source = new(path);
-            control._imgOrg = new(source);
-            control._imgShow = new(source);
-            control._imageViewer.Source = Bitmap2BitmapImage(control._imgShow);
+            control._bitmapImage = new(new(path));
+            control._imageViewer.Source = control._bitmapImage;
         }
     }
+
 }
