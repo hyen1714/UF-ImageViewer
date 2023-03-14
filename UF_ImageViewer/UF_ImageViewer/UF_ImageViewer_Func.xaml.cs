@@ -1,25 +1,17 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Color = System.Windows.Media.Color;
+using Path = System.IO.Path;
 using Point = System.Windows.Point;
 
 namespace UF.ImageViewer;
 
 public partial class UF_ImageViewer : UserControl
 {
-    /// <summary>
-    /// 이미지를 이동 시킵니다.
-    /// </summary>
-    /// <param name="panXY"> 이전 출력 위치 </param>
-    /// <param name="clickStart"> 시작 클릭 위치 </param>
-    /// <param name="clickCurrent"> 현재 클릭 위치 </param>
     void Pan(Point panXY, Point clickStart, Point clickCurrent)
     {
         ScaleTransform st = _scaleTransform;
@@ -56,11 +48,6 @@ public partial class UF_ImageViewer : UserControl
         tt.Y = panY;
     }
 
-    /// <summary>
-    /// 이미지를 확대 축소한다.
-    /// </summary>
-    /// <param name="zoomIn"> 확대 인 경우 true </param>
-    /// <param name="point"> 확대, 축소의 기준이 될 이미지의 위치 </param>
     void Zoom(bool zoomIn, Point point)
     {
         ScaleTransform st = _scaleTransform;
@@ -123,11 +110,25 @@ public partial class UF_ImageViewer : UserControl
         tt.Y = panY;
     }
 
+    void ResetZoom()
+    {
+        ScaleTransform st = _scaleTransform;
+        TranslateTransform tt = _translateTransform;
+        st.ScaleX = 1;
+        st.ScaleY = 1;
+        tt.X = 0;
+        tt.Y = 0;
+    }
+
     void ClearPixelLine()
     {
         var linesToRemove = _canvas.Children.OfType<Line>().Where(line => line.Name.StartsWith("PixelLine")).ToList();
         foreach (var line in linesToRemove)
             _canvas.Children.Remove(line);
+
+        var textBlocksToRemove = _canvas.Children.OfType<TextBlock>().Where(line => line.Name.StartsWith("PixelValue")).ToList();
+        foreach (var textBlock in textBlocksToRemove)
+            _canvas.Children.Remove(textBlock);
     }
 
     void DrawPixelLine()
@@ -155,84 +156,73 @@ public partial class UF_ImageViewer : UserControl
 
             double gapX = Math.Ceiling(pixelL) - pixelL;
             double gapY = Math.Ceiling(pixelT) - pixelT;
-            double startX =  dipPixelW * gapX;
-            double startY =  dipPixelH * gapY;
+            double startLineX =  dipPixelW * gapX;
+            double startLineY =  dipPixelH * gapY;
 
+            string key;
             for (int i = 0; i < canvasPixelCntX; i++)
             {
-                string keyV = $"PixelLineV{i}";
-                Line? shape = _canvas.Children.OfType<Line>().FirstOrDefault(s => s.Name == keyV);
-                if (shape == null)
+                key = $"PixelLineV{i}";
+                _canvas.Children.Add(new Line()
                 {
-                    Line line = new()
-                    {
-                        X1 = startX + (dipPixelW * i),
-                        X2 = startX + (dipPixelW * i),
-                        Y2 = _canvas.ActualHeight,
-                        Stroke = new SolidColorBrush(PixelLineColor),
-                        Name = keyV
-                    };
-                    _canvas.Children.Add(line);
-                }
+                    X1 = startLineX + (dipPixelW * i),
+                    X2 = startLineX + (dipPixelW * i),
+                    Y2 = _canvas.ActualHeight,
+                    Stroke = new SolidColorBrush(PixelLineColor),
+                    Name = key
+                });
             }
-            
+
             for (int i = 0; i < canvasPixelCntY; i++)
             {
-                string keyH = $"PixelLineH{i}";
-                Line? shape = _canvas.Children.OfType<Line>().FirstOrDefault(s => s.Name == keyH);
-                if (shape == null)
+                key = $"PixelLineH{i}";
+                _canvas.Children.Add(new Line()
                 {
-                    Line line = new()
+                    X2 = _canvas.ActualWidth,
+                    Y1 = startLineY + (dipPixelH * i),
+                    Y2 = startLineY + (dipPixelH * i),
+                    Stroke = new SolidColorBrush(PixelLineColor),
+                    Name = key
+                });
+            }
+
+            if(_bitmapImage.Format.BitsPerPixel == 8)
+            {
+                double startValX = startLineX - dipPixelW;
+                double startValY = startLineY - dipPixelH;
+                int startPixelX = (int)Math.Truncate(pixelL);
+                int startPixelY = (int)Math.Truncate(pixelT);
+                for (int i = 0; i < canvasPixelCntX + 1; i++)
+                {
+                    for (int j = 0; j < canvasPixelCntY + 1; j++)
                     {
-                        X2 = _canvas.ActualWidth,
-                        Y1 = startY + (dipPixelH * i),
-                        Y2 = startY + (dipPixelH * i),
-                        Stroke = new SolidColorBrush(PixelLineColor),
-                        Name = keyH
-                    };
-                    _canvas.Children.Add(line);
+                        int idx = ((startPixelY + j) * _bitmapImage.PixelWidth) + (startPixelX + i);
+                        key = $"PixelValue{i}{j}";
+                        TextBlock clrVal = new()
+                        {
+                            Text = $"{_pixels[idx]}",
+                            FontSize = 20,
+                            Foreground = new SolidColorBrush(PixelValuColor),
+                            Name = key
+                        };
+                        clrVal.MouseWheel += ImageViewer_MouseWheel;
+                        clrVal.MouseLeftButtonDown += ImageViewer_MouseLeftButtonDown;
+                        clrVal.MouseLeftButtonUp += ImageViewer_MouseLeftButtonUp;
+                        clrVal.MouseMove += ImageViewer_MouseMove;
+
+                        Canvas.SetLeft(clrVal, startValX + (dipPixelW * i));
+                        Canvas.SetTop(clrVal, startValY + (dipPixelH * j));
+                        _canvas.Children.Add(clrVal);
+                    }
                 }
             }
         }
     }
 
-    /// <summary>
-    /// 파일의 확장자확인하여 이미지 파일인지 판단.
-    /// </summary>
-    /// <param name="filePath"> 풀경로 </param>
-    /// <returns> 이미지 확장자 인 경우 true </returns>
     static bool IsImageFile(string filePath)
     {
-        string extension = System.IO.Path.GetExtension(filePath).ToLower();
-        return extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".bmp" || extension == ".gif";
+        string extension = Path.GetExtension(filePath).ToLower();
+        return extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".bmp" || extension == ".gif" || extension == ".tif";
     }
-
-    static Bitmap BitmapImage2Bitmap(BitmapImage bitmapImage)
-    {
-        using MemoryStream outStream = new();
-        BitmapEncoder enc = new BmpBitmapEncoder();
-        enc.Frames.Add(BitmapFrame.Create(bitmapImage));
-        enc.Save(outStream);
-        using Bitmap bitmap = new(outStream);
-
-        return new Bitmap(bitmap);
-    }
-
-    static BitmapSource Bitmap2BitmapImage(Bitmap bitmap)
-    {
-        using var memory = new MemoryStream();
-        bitmap.Save(memory, ImageFormat.Png);
-        memory.Position = 0;
-
-        var bitmapImage = new BitmapImage();
-        bitmapImage.BeginInit();
-        bitmapImage.StreamSource = memory;
-        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-        bitmapImage.EndInit();
-        bitmapImage.Freeze();
-
-        return bitmapImage;
-    }
-
 }
 

@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -32,6 +35,13 @@ public partial class UF_ImageViewer : UserControl
 
             ClearPixelLine();
         }
+    }
+
+    void ImageViewer_MouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        Zoom(e.Delta > 0, e.GetPosition(_imageViewer));
+        ClearPixelLine();
+        DrawPixelLine();
     }
 
     void ImageViewer_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -69,27 +79,33 @@ public partial class UF_ImageViewer : UserControl
         double x = e.GetPosition(_imageViewer).X * ratioW;
         double y = e.GetPosition(_imageViewer).Y * ratioH;
         CurrentPixelPosition = new Point(x, y);
-    }
 
-    void ImageViewer_MouseWheel(object sender, MouseWheelEventArgs e)
-    {
-        Zoom(e.Delta > 0, e.GetPosition(_imageViewer));
-
-        ClearPixelLine();
-        DrawPixelLine();
-    }
-
-    void ImageViewer_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        // 타원 그리기
-        Ellipse ellipse = new Ellipse();
-        ellipse.Width = 100;
-        ellipse.Height = 50;
-        ellipse.Fill = Brushes.Green;
-        Canvas.SetLeft(ellipse, 120);
-        Canvas.SetTop(ellipse, 150);
-        _canvas.Children.Add(ellipse);
-        _canvas.Children.Remove(ellipse);
+        if (_bitmapImage.Format.BitsPerPixel == 1 || _bitmapImage.Format.BitsPerPixel == 8)
+        {
+            int idx = ((int)Math.Truncate(y) * _bitmapImage.PixelWidth) + (int)Math.Truncate(x);
+            CurrentPixelColor = Color.FromRgb(_pixels[idx], _pixels[idx], _pixels[idx]);
+        }
+        else if (_bitmapImage.Format.BitsPerPixel == 16)
+        { // RGB 565
+            int idx = (((int)Math.Truncate(y) * _bitmapImage.PixelWidth) + (int)Math.Truncate(x)) * 2;
+            ushort pixelData = BitConverter.ToUInt16(_pixels, idx);
+            int red = (pixelData & 0xF800) >> 11;
+            int green = (pixelData & 0x07E0) >> 5;
+            int blue = pixelData & 0x001F;
+            CurrentPixelColor = Color.FromRgb((byte)(red << 3), (byte)(green << 2), (byte)(blue << 3));
+        }
+        else if (_bitmapImage.Format.BitsPerPixel == 24)
+        {
+            int idx = (((int)Math.Truncate(y) * _bitmapImage.PixelWidth) + (int)Math.Truncate(x)) * 3;
+            CurrentPixelColor = Color.FromRgb(_pixels[idx + 2], _pixels[idx + 1], _pixels[idx]);
+        }
+        else if (_bitmapImage.Format.BitsPerPixel == 32)
+        {
+            int idx = (((int)Math.Truncate(y) * _bitmapImage.PixelWidth) + (int)Math.Truncate(x)) * 4;
+            CurrentPixelColor = Color.FromArgb(_pixels[idx + 3], _pixels[idx + 2], _pixels[idx + 1], _pixels[idx]);
+        }
+        else
+            CurrentPixelColor = Color.FromRgb(0, 0, 0);
     }
 
     void ImageViewer_KeyDown(object sender, KeyEventArgs e)
@@ -106,7 +122,11 @@ public partial class UF_ImageViewer : UserControl
                 return;
         }
         if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
             Zoom(zoom, Mouse.GetPosition(_imageViewer));
+            ClearPixelLine();
+            DrawPixelLine();
+        }
     }
 }
 

@@ -1,5 +1,11 @@
-﻿using System.Windows;
+﻿using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace UF.ImageViewer;
 
@@ -19,9 +25,20 @@ public partial class UF_ImageViewer : UserControl
             if (IsImageFile(path) == false)
                 return;
 
-            control._bitmapImage = new(new(path));
-            control._imageViewer.Source = control._bitmapImage;
+            BitmapImage image = new(new(path));
+            int pixelWidth = image.PixelWidth;
+            int pixelHeight = image.PixelHeight;
+            int bitCountPerPixel = image.Format.BitsPerPixel;
+            int stride = (pixelWidth * bitCountPerPixel / 8 + 3) & ~3;
+            int size = stride * pixelHeight;
+            if (control._pixels.Length != size)
+                control._pixels = new byte[size];
+            image.CopyPixels(control._pixels, stride, 0);
+
+            control.ClearPixelLine();
+            control.ResetZoom();
+            control._bitmapImage = image;
+            control._imageViewer.Source = image;
         }
     }
-
 }
